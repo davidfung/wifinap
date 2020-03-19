@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import './widgets/wifistatus.dart';
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -26,15 +28,9 @@ class MyHomePage extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-          ],
-        ),
+      body: Container(
+        alignment: Alignment.center,
+        child: WiFiStatus(),
       ),
     );
   }
