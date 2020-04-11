@@ -30,10 +30,6 @@ const Icon statusOffIcon = Icon(
 );
 
 class WiFiStatus extends StatefulWidget {
-  WiFiStatus() {
-    print("hhh");
-  }
-
   @override
   _WiFiStatusState createState() => _WiFiStatusState();
 }
@@ -65,7 +61,8 @@ class _WiFiStatusState extends State<WiFiStatus> {
     await prefs.setInt(countKey, currentCount);
 
     if (currentCount == 0) {
-      print("==== Time's Up !!");
+      print("==== Time's Up !! Enableing WiFi");
+      await WiFiForIoTPlugin.setEnabled(true);
     } else {
       print("==== $currentCount minutes left ...");
       await AndroidAlarmManager.oneShot(
@@ -174,7 +171,8 @@ class _WiFiStatusState extends State<WiFiStatus> {
                   child: Text("Test"),
                   onPressed: () async {
                     final DateTime now = DateTime.now();
-                    print("================ [$now] Button pressed!");
+                    print(
+                        "================ [$now] Button pressed! Disable WiFi");
                     await prefs.setInt(countKey, 3);
                     await AndroidAlarmManager.oneShot(
                       const Duration(seconds: 5),
@@ -185,6 +183,7 @@ class _WiFiStatusState extends State<WiFiStatus> {
                       allowWhileIdle: true,
                       rescheduleOnReboot: true,
                     );
+                    await WiFiForIoTPlugin.setEnabled(false);
                     setState(() {});
                   },
                 )
