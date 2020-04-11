@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:android_alarm_manager/android_alarm_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:timer_count_down/timer_count_down.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 
 import '../main.dart';
@@ -35,10 +34,7 @@ class WiFiStatus extends StatefulWidget {
 }
 
 class _WiFiStatusState extends State<WiFiStatus> {
-  bool _firstTime = true;
-  bool _timerRunning = false;
   bool _wifiEnabled;
-  int _seconds = napDuration;
 
   // The background
   static SendPort uiSendPort;
@@ -104,7 +100,7 @@ class _WiFiStatusState extends State<WiFiStatus> {
             } else {
               statusIcon = statusOffIcon;
             }
-            if (_timerRunning) {
+            if (_wifiEnabled) {
               btnText = btnCancelCap;
             } else {
               btnText = btnNapCap;
@@ -118,22 +114,6 @@ class _WiFiStatusState extends State<WiFiStatus> {
                     child: statusIcon,
                   ),
                 ),
-                if (_timerRunning)
-                  Expanded(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: CountDown(
-                        seconds: _seconds,
-                        onTimer: () async {
-                          this._timerRunning = false;
-                          this._wifiEnabled = true;
-                          await WiFiForIoTPlugin.setEnabled(true);
-                          setState(() {});
-                        },
-                        style: TextStyle(fontSize: timerFontSize),
-                      ),
-                    ),
-                  ),
                 Expanded(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
@@ -147,12 +127,10 @@ class _WiFiStatusState extends State<WiFiStatus> {
                       ),
                       onPressed: () async {
                         if (btnText == btnNapCap) {
-                          this._timerRunning = true;
                           this._wifiEnabled = false;
                           await WiFiForIoTPlugin.setEnabled(false);
                           btnText = btnCancelCap;
                         } else {
-                          this._timerRunning = false;
                           this._wifiEnabled = true;
                           await WiFiForIoTPlugin.setEnabled(true);
                           btnText = btnNapCap;
@@ -196,9 +174,6 @@ class _WiFiStatusState extends State<WiFiStatus> {
   }
 
   Future<void> getWiFiState() async {
-    if (_firstTime) {
-      _wifiEnabled = await WiFiForIoTPlugin.isEnabled();
-    }
-    _firstTime = false;
+    _wifiEnabled = await WiFiForIoTPlugin.isEnabled();
   }
 }
