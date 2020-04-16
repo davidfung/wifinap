@@ -9,7 +9,6 @@ import 'package:wifi_iot/wifi_iot.dart';
 
 import '../main.dart';
 
-const napDuration = 300; // seconds
 const iconSize = 200.0;
 const timerFontSize = 120.0;
 const btnFontSize = 60.0;
@@ -28,41 +27,48 @@ const Icon statusOffIcon = Icon(
   color: Colors.red,
 );
 
+//const alarmDuration = 3; // in seconds
+const alarmDuration = 60; // in seconds
+const alarmCount = 5; // nap time = alarmDuration x alarmCount
+
+// The callback for the alarm.  Whenever the alarm fires, send a null
+// message to the UI Isolate.
+Future<void> callback() async {
+  SendPort uiSendPort;
+  uiSendPort ??= IsolateNameServer.lookupPortByName(isolateName);
+  uiSendPort?.send(null);
+}
+
 class WiFiStatus extends StatefulWidget {
   @override
   _WiFiStatusState createState() => _WiFiStatusState();
 }
 
 class _WiFiStatusState extends State<WiFiStatus> {
-  bool _wifiEnabled;
-
-  // The background
-  static SendPort uiSendPort;
+  int currentCount = 0;
 
   @override
   void initState() {
     super.initState();
-
-    // Register for events from the background isolate. These messages will
-    // always coincide with an alarm firing.
+    // Make this state listens to the background isolate.
     port.listen((_) async => await _decrementCounter());
   }
 
   Future<void> _decrementCounter() async {
-    print('Decrement counter!');
-
-    // Get the previous cached count and increment it.
+    // increment the counter
     final prefs = await SharedPreferences.getInstance();
-    int currentCount = prefs.getInt(countKey) - 1;
+    currentCount = prefs.getInt(countKey) - 1;
     await prefs.setInt(countKey, currentCount);
+    setState(() {});
 
-    if (currentCount == 0) {
+    // If time's up, re-enable Wifi, else re-schedule alarm.
+    if (currentCount <= 0) {
       print("==== Time's Up !! Enableing WiFi");
       await WiFiForIoTPlugin.setEnabled(true);
     } else {
-      print("==== $currentCount minutes left ...");
+      print("==== Counting... $currentCount");
       await AndroidAlarmManager.oneShot(
-        const Duration(seconds: 5),
+        const Duration(seconds: 3),
         Random().nextInt(pow(2, 31)),
         callback,
         exact: true,
@@ -72,108 +78,46 @@ class _WiFiStatusState extends State<WiFiStatus> {
       );
     }
 
-    // Ensure we've loaded the updated count from the background isolate.
-    //await prefs.reload();
+    // inform flutter the currentCount has changed
     setState(() {});
-  }
-
-  // The callback for our alarm
-  static Future<void> callback() async {
-    final DateTime now = DateTime.now();
-    print("================ [$now] Alarm fired!");
-
-    // This will be null if we're running in the background.
-    uiSendPort ??= IsolateNameServer.lookupPortByName(isolateName);
-    uiSendPort?.send(null);
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        future: getWiFiState(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            String btnText;
-            Icon statusIcon;
-            if (_wifiEnabled) {
-              statusIcon = statusOnIcon;
-            } else {
-              statusIcon = statusOffIcon;
-            }
-            if (_wifiEnabled) {
-              btnText = btnCancelCap;
-            } else {
-              btnText = btnNapCap;
-            }
-            return Column(
-              children: <Widget>[
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.bottomCenter,
-                    child: statusIcon,
-                  ),
-                ),
-                Expanded(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.topCenter,
-                    child: RaisedButton(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 20, horizontal: 40),
-                      child: Text(
-                        btnText,
-                        style: TextStyle(fontSize: btnFontSize),
-                      ),
-                      onPressed: () async {
-                        if (btnText == btnNapCap) {
-                          this._wifiEnabled = false;
-                          await WiFiForIoTPlugin.setEnabled(false);
-                          btnText = btnCancelCap;
-                        } else {
-                          this._wifiEnabled = true;
-                          await WiFiForIoTPlugin.setEnabled(true);
-                          btnText = btnNapCap;
-                        }
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                ),
-                SizedBox(height: 10.0),
-                Text(
-                  prefs.getInt(countKey).toString(),
-//                  key: ValueKey('BackgroundCountText'),
-                ),
-                RaisedButton(
-                  child: Text("Test"),
-                  onPressed: () async {
-                    final DateTime now = DateTime.now();
-                    print(
-                        "================ [$now] Button pressed! Disable WiFi");
-                    await prefs.setInt(countKey, 3);
-                    await AndroidAlarmManager.oneShot(
-                      const Duration(seconds: 5),
-                      Random().nextInt(pow(2, 31)),
-                      callback,
-                      exact: true,
-                      wakeup: true,
-                      allowWhileIdle: true,
-                      rescheduleOnReboot: true,
-                    );
-                    await WiFiForIoTPlugin.setEnabled(false);
-                    setState(() {});
-                  },
-                )
-              ],
-            );
-          } else {
-            return CircularProgressIndicator();
-          }
-        });
-  }
-
-  Future<void> getWiFiState() async {
-    _wifiEnabled = await WiFiForIoTPlugin.isEnabled();
+    return Column(
+      children: <Widget>[
+        Expanded(
+          flex: 1,
+          child: FittedBox(
+              alignment: Alignment.bottomCenter, child: Text("$currentCount")),
+        ),
+        Expanded(
+          flex: 1,
+          child: FittedBox(
+              fit: BoxFit.contain,
+              alignment: Alignment.topCenter,
+              child: RaisedButton(
+                child: Text("Disable WiFi"),
+                onPressed: () async {
+                  final DateTime now = DateTime.now();
+                  print("================ [$now] Button pressed! Disable WiFi");
+                  currentCount = alarmCount;
+                  await prefs.setInt(countKey, alarmCount);
+                  await AndroidAlarmManager.oneShot(
+                    const Duration(seconds: alarmDuration),
+                    Random().nextInt(pow(2, 31)),
+                    callback,
+                    exact: true,
+                    wakeup: true,
+                    allowWhileIdle: true,
+                    rescheduleOnReboot: true,
+                  );
+                  await WiFiForIoTPlugin.setEnabled(false);
+                  setState(() {});
+                },
+              )),
+        ),
+      ],
+    );
   }
 }
