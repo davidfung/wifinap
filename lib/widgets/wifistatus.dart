@@ -49,7 +49,7 @@ class _WiFiStatusState extends State<WiFiStatus> {
   @override
   void initState() {
     super.initState();
-    // Make this state listens to the background isolate.
+    // Make this stateful widget state listens to the background isolate.
     port.listen((_) async => await _decrementCounter());
     napCount = prefs.getInt(keyNapCount);
     counter = prefs.getInt(keyCounter);
@@ -63,13 +63,17 @@ class _WiFiStatusState extends State<WiFiStatus> {
 
     // Decrement the counter.
     counter = prefs.getInt(keyCounter) - 1;
+    bool timeIsUp = counter <= 0;
+    if (timeIsUp) {
+      alarmActive = false;
+      counter = defaultNapCount;
+    }
     await prefs.setInt(keyCounter, counter);
 
     // If time's up, re-enable Wifi, else re-schedule alarm.
-    if (counter <= 0) {
+    if (timeIsUp) {
       print("==== Time's Up !! Enableing WiFi");
       await WiFiForIoTPlugin.setEnabled(true);
-      alarmActive = false;
     } else {
       print("==== Counting... $counter");
       await AndroidAlarmManager.oneShot(
@@ -89,29 +93,45 @@ class _WiFiStatusState extends State<WiFiStatus> {
 
   @override
   Widget build(BuildContext context) {
-    if (alarmActive) {
-      return _alarmActiveWidget();
+    String minuteStr;
+    if (counter > 1) {
+      minuteStr = 'minutes';
     } else {
-      return _alarmInactiveWidget();
+      minuteStr = 'minute';
+    }
+    if (alarmActive) {
+      return _alarmActiveWidget(minuteStr);
+    } else {
+      return _alarmInactiveWidget(minuteStr);
     }
   }
 
-  Widget _alarmActiveWidget() {
-    String minutes = "minute";
-    if (counter > 1) {
-      minutes += 's';
-    }
+  Widget _alarmActiveWidget(String minuteStr) {
     return Column(
       children: <Widget>[
         Expanded(
           flex: 1,
           child: FittedBox(
             alignment: Alignment.bottomCenter,
-            child: Text("$counter"),
+            child: Text("WiFi stays off for"),
           ),
         ),
         Expanded(
           flex: 1,
+          child: FittedBox(
+            alignment: Alignment.topCenter,
+            child: Text("$counter $minuteStr"),
+          ),
+        ),
+        Expanded(
+          flex: 1,
+          child: FittedBox(
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(),
+          ),
+        ),
+        Expanded(
+          flex: 2,
           child: FittedBox(
               fit: BoxFit.contain,
               alignment: Alignment.topCenter,
@@ -130,18 +150,25 @@ class _WiFiStatusState extends State<WiFiStatus> {
     );
   }
 
-  Widget _alarmInactiveWidget() {
+  Widget _alarmInactiveWidget(String minuteStr) {
     return Column(
       children: <Widget>[
         Expanded(
           flex: 1,
           child: FittedBox(
             alignment: Alignment.bottomCenter,
-            child: Text("Disable WiFi for $napCount seconds"),
+            child: Text("Disable WiFi for"),
           ),
         ),
         Expanded(
           flex: 1,
+          child: FittedBox(
+            alignment: Alignment.topCenter,
+            child: Text("$napCount $minuteStr"),
+          ),
+        ),
+        Expanded(
+          flex: 2,
           child: FittedBox(
               fit: BoxFit.contain,
               alignment: Alignment.topCenter,

@@ -11,14 +11,16 @@ const TextStyle bodyStyle = TextStyle(fontSize: 16);
 const TextStyle linkStyle = TextStyle(fontSize: 18, color: Colors.blue);
 
 // Shared Preferences keys
-const String keyCounter = 'counter';
+const String keyCounter = 'counter'; // a working counter shared by isolates
 const String keyNapCount = 'napCount'; // nap time = nap count x alarm duration
 
 // Settings
-const int defaultNapCount = 300; //15;
+const int defaultNapCount = 5;
 
 // Isolate
 const String isolateName = 'isolate';
 
 // Alarm
-const alarmDuration = 1; // in seconds
+// Although the alarm is set by minutes, we schedule it by seconds
+// for debugging purpose.
+const alarmDuration = 1; //60; // in seconds

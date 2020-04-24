@@ -30,7 +30,7 @@ void main() async {
   }
   //await prefs.setInt(keyNapCount, defaultNapCount);
   if (!prefs.containsKey(keyCounter)) {
-    await prefs.setInt(keyCounter, 0);
+    await prefs.setInt(keyCounter, 5);
   }
 
   await AndroidAlarmManager.initialize();
