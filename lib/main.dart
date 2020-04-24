@@ -5,18 +5,13 @@ import 'package:android_alarm_manager/android_alarm_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import './constants.dart';
 import './widgets/wifistatus.dart';
-
-/// The [SharedPreferences] key to access the alarm fire count.
-const String countKey = 'count';
 
 /// Global [SharedPreferences] object.
 SharedPreferences prefs;
 
-/// The name associated with the UI isolate's [SendPort].
-const String isolateName = 'isolate';
-
-/// A port used to communicate from a background isolate to the UI isolate.
+/// A port of the UI isolate to receive messages
 final ReceivePort port = ReceivePort();
 
 void main() async {
@@ -30,8 +25,12 @@ void main() async {
   );
 
   prefs = await SharedPreferences.getInstance();
-  if (!prefs.containsKey(countKey)) {
-    await prefs.setInt(countKey, 0);
+  if (!prefs.containsKey(keyNapCount)) {
+    await prefs.setInt(keyNapCount, defaultNapCount);
+  }
+  //await prefs.setInt(keyNapCount, defaultNapCount);
+  if (!prefs.containsKey(keyCounter)) {
+    await prefs.setInt(keyCounter, 0);
   }
 
   await AndroidAlarmManager.initialize();
