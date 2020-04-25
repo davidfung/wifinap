@@ -23,4 +23,4 @@ const String isolateName = 'isolate';
 // Alarm
 // Although the alarm is set by minutes, we schedule it by seconds
 // for debugging purpose.
-const alarmDuration = 1; //60; // in seconds
+const alarmDuration = 60; // in seconds
