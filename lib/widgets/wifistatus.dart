@@ -113,7 +113,7 @@ class _WiFiStatusState extends State<WiFiStatus> {
           flex: 1,
           child: FittedBox(
             alignment: Alignment.bottomCenter,
-            child: Text("WiFi stays off for"),
+            child: Text("WiFi Off Countdown"),
           ),
         ),
         Expanded(
@@ -121,13 +121,6 @@ class _WiFiStatusState extends State<WiFiStatus> {
           child: FittedBox(
             alignment: Alignment.topCenter,
             child: Text("$counter $minuteStr"),
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: FittedBox(
-            alignment: Alignment.center,
-            child: CircularProgressIndicator(),
           ),
         ),
         Expanded(

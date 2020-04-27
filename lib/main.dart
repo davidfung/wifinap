@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.amber,
       ),
       home: MyHomePage(title: 'WiFi Nap'),
     );
@@ -57,13 +57,15 @@ class MyHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Container(
-        alignment: Alignment.center,
-        child: WiFiStatus(),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+        ),
+        body: Container(
+          alignment: Alignment.center,
+          child: WiFiStatus(),
+        ),
       ),
     );
   }
