@@ -21,7 +21,7 @@ const Icon statusOnIcon = Icon(
   color: Colors.green,
 );
 
-const Icon statusOffIcon = Icon(
+const Icon wifiOffIcon = Icon(
   Icons.signal_wifi_off,
   size: iconSize,
   color: Colors.red,
@@ -41,41 +41,37 @@ class WiFiStatus extends StatefulWidget {
 }
 
 class _WiFiStatusState extends State<WiFiStatus> {
-  int napCount;
-  int counter;
-  bool alarmActive = false;
+  DateTime targetTime;
+  DateTime currentTime;
+  bool isSleeping = false;
   final alarmID = Random().nextInt(pow(2, 31));
 
   @override
   void initState() {
     super.initState();
-    // Make this stateful widget state listens to the background isolate.
-    port.listen((_) async => await _decrementCounter());
-    napCount = prefs.getInt(keyNapCount);
-    counter = prefs.getInt(keyCounter);
+    // Listen to the background isolate.
+    port.listen((_) async => await _checkTimesUp());
   }
 
-  Future<void> _decrementCounter() async {
+  Future<void> _checkTimesUp() async {
     // Do nothing if alarm not active
-    if (!alarmActive) {
+    if (!isSleeping) {
       return;
     }
 
-    // Decrement the counter.
-    counter = prefs.getInt(keyCounter) - 1;
-    bool timeIsUp = counter <= 0;
-    if (timeIsUp) {
-      alarmActive = false;
-      counter = defaultNapCount;
-    }
-    await prefs.setInt(keyCounter, counter);
+    int epochTime = prefs.getInt(keyTargetTime);
+    targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
+    currentTime = DateTime.now();
 
     // If time's up, re-enable Wifi, else re-schedule alarm.
+    bool timeIsUp = targetTime.difference(currentTime).isNegative;
     if (timeIsUp) {
       print("==== Time's Up !! Enableing WiFi");
+      isSleeping = false;
       await WiFiForIoTPlugin.setEnabled(true);
+      setState(() {});
     } else {
-      print("==== Counting... $counter");
+      print("==== Counting down to $targetTime: $currentTime...");
       await AndroidAlarmManager.oneShot(
         const Duration(seconds: alarmDuration),
         Random().nextInt(pow(2, 31)),
@@ -86,41 +82,40 @@ class _WiFiStatusState extends State<WiFiStatus> {
         rescheduleOnReboot: true,
       );
     }
-
-    // inform flutter the currentCount has changed
-    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    String minuteStr;
-    if (counter > 1) {
-      minuteStr = 'minutes';
+    if (isSleeping) {
+      return _sleepWidget();
     } else {
-      minuteStr = 'minute';
-    }
-    if (alarmActive) {
-      return _alarmActiveWidget(minuteStr);
-    } else {
-      return _alarmInactiveWidget(minuteStr);
+      return _awakeWidget();
     }
   }
 
-  Widget _alarmActiveWidget(String minuteStr) {
+  Widget _sleepWidget() {
+    int epochTime = prefs.getInt(keyTargetTime);
+    targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
     return Column(
       children: <Widget>[
+        Expanded(
+            flex: 1,
+            child: FittedBox(
+              alignment: Alignment.center,
+              child: wifiOffIcon,
+            )),
         Expanded(
           flex: 1,
           child: FittedBox(
             alignment: Alignment.bottomCenter,
-            child: Text("WiFi Off Countdown"),
+            child: Text(msgSleep),
           ),
         ),
         Expanded(
           flex: 1,
           child: FittedBox(
             alignment: Alignment.topCenter,
-            child: Text("$counter $minuteStr"),
+            child: Text("$targetTime"),
           ),
         ),
         Expanded(
@@ -134,7 +129,7 @@ class _WiFiStatusState extends State<WiFiStatus> {
                   print("==== Cancelled");
                   await WiFiForIoTPlugin.setEnabled(true);
                   await AndroidAlarmManager.cancel(alarmID);
-                  alarmActive = false;
+                  isSleeping = false;
                   setState(() {});
                 },
               )),
@@ -143,21 +138,14 @@ class _WiFiStatusState extends State<WiFiStatus> {
     );
   }
 
-  Widget _alarmInactiveWidget(String minuteStr) {
+  Widget _awakeWidget() {
     return Column(
       children: <Widget>[
         Expanded(
           flex: 1,
           child: FittedBox(
             alignment: Alignment.bottomCenter,
-            child: Text("Disable WiFi for"),
-          ),
-        ),
-        Expanded(
-          flex: 1,
-          child: FittedBox(
-            alignment: Alignment.topCenter,
-            child: Text("$napCount $minuteStr"),
+            child: Text(msgAwake),
           ),
         ),
         Expanded(
@@ -168,10 +156,12 @@ class _WiFiStatusState extends State<WiFiStatus> {
               child: RaisedButton(
                 child: Text("Start"),
                 onPressed: () async {
-                  final DateTime now = DateTime.now();
+                  final DateTime now =
+                      DateTime.now().add(Duration(minutes: defaultNapMinutes));
+                  int epochTime = now.millisecondsSinceEpoch;
+
                   print("================ [$now] Button pressed! Disable WiFi");
-                  counter = napCount;
-                  await prefs.setInt(keyCounter, counter);
+                  await prefs.setInt(keyTargetTime, epochTime);
                   await AndroidAlarmManager.oneShot(
                     const Duration(seconds: alarmDuration),
                     alarmID,
@@ -182,7 +172,7 @@ class _WiFiStatusState extends State<WiFiStatus> {
                     rescheduleOnReboot: true,
                   );
                   await WiFiForIoTPlugin.setEnabled(false);
-                  alarmActive = true;
+                  isSleeping = true;
                   setState(() {});
                 },
               )),

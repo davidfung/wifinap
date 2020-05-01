@@ -17,20 +17,15 @@ final ReceivePort port = ReceivePort();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register the UI isolate's SendPort to allow for communication from the
-  // background isolate.
+  // Register the UI isolate's SendPort for the alarm isolate to talk to.
   IsolateNameServer.registerPortWithName(
     port.sendPort,
     isolateName,
   );
 
   prefs = await SharedPreferences.getInstance();
-  if (!prefs.containsKey(keyNapCount)) {
-    await prefs.setInt(keyNapCount, defaultNapCount);
-  }
-  //await prefs.setInt(keyNapCount, defaultNapCount);
-  if (!prefs.containsKey(keyCounter)) {
-    await prefs.setInt(keyCounter, 5);
+  if (!prefs.containsKey(keyTargetTime)) {
+    await prefs.setInt(keyTargetTime, 0);
   }
 
   await AndroidAlarmManager.initialize();

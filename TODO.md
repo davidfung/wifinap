@@ -10,5 +10,6 @@
 - Change to time-based countdown
 - Show snack bar on cancel
 - Handle case of WiFi alraedy off on startup
+- chime when Wifi state changes
 
 

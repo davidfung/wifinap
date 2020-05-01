@@ -10,17 +10,19 @@ const TextStyle captionStyle =
 const TextStyle bodyStyle = TextStyle(fontSize: 16);
 const TextStyle linkStyle = TextStyle(fontSize: 18, color: Colors.blue);
 
+//
 // Shared Preferences keys
-const String keyCounter = 'counter'; // a working counter shared by isolates
-const String keyNapCount = 'napCount'; // nap time = nap count x alarm duration
+const String keyTargetTime = 'keyTargetTime'; // Time to re-enable WiFi
 
-// Settings
-const int defaultNapCount = 5;
+// Defaults
+const int defaultNapMinutes = 5;
 
 // Isolate
 const String isolateName = 'isolate';
 
-// Alarm
-// Although the alarm is set by minutes, we schedule it by seconds
-// for debugging purpose.
-const alarmDuration = 60; // in seconds
+// Alarm interval
+const alarmDuration = 30; // in seconds
+
+// UI strings
+const msgSleep = 'WiFi disabled until';
+const msgAwake = 'Disable WiFi';
