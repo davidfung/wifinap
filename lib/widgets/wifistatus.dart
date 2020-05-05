@@ -10,12 +10,11 @@ import '../constants.dart';
 import '../main.dart';
 
 const iconSize = 200.0;
-const timerFontSize = 120.0;
-const btnFontSize = 60.0;
-const btnNapCap = 'Nap';
-const btnCancelCap = 'Cancel';
+//const btnFontSize = 60.0;
+const btnStart = 'Start';
+const btnCancel = 'Cancel';
 
-const Icon statusOnIcon = Icon(
+const Icon wifiOnIcon = Icon(
   Icons.wifi,
   size: iconSize,
   color: Colors.green,
@@ -41,8 +40,6 @@ class WiFiStatus extends StatefulWidget {
 }
 
 class _WiFiStatusState extends State<WiFiStatus> {
-  DateTime targetTime;
-  DateTime currentTime;
   bool isSleeping = false;
   final alarmID = Random().nextInt(pow(2, 31));
 
@@ -50,28 +47,40 @@ class _WiFiStatusState extends State<WiFiStatus> {
   void initState() {
     super.initState();
     // Listen to the background isolate.
-    port.listen((_) async => await _checkTimesUp());
-  }
+    port.listen((_) async => await _checkpoint());
 
-  Future<void> _checkTimesUp() async {
-    // Do nothing if alarm not active
-    if (!isSleeping) {
-      return;
+    void _initCheckpoint() async {
+      await _checkpoint();
     }
 
-    int epochTime = prefs.getInt(keyTargetTime);
-    targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
-    currentTime = DateTime.now();
+    _initCheckpoint();
+  }
 
-    // If time's up, re-enable Wifi, else re-schedule alarm.
+  /// Call this routine regularly to see what should we do next.
+  /// Usually repeatedly called by an alarm, but also being called at start up.
+  Future<void> _checkpoint() async {
+    int epochTime = prefs.getInt(keyTargetTime);
+    DateTime targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
+    DateTime currentTime = DateTime.now();
     bool timeIsUp = targetTime.difference(currentTime).isNegative;
+
+    // If time's up, re-enable Wifi,
+    // else keep wifi off and schedule a new alarm.
     if (timeIsUp) {
-      print("==== Time's Up !! Enableing WiFi");
-      isSleeping = false;
-      await WiFiForIoTPlugin.setEnabled(true);
-      setState(() {});
+      if (isSleeping) {
+        print("==== Time's Up !! Enabling WiFi");
+        isSleeping = false;
+        await WiFiForIoTPlugin.setEnabled(true);
+        setState(() {});
+      }
     } else {
+      if (!isSleeping) {
+        // case of app was killed and restarted while a timer is running
+        isSleeping = true;
+        setState(() {});
+      }
       print("==== Counting down to $targetTime: $currentTime...");
+      await WiFiForIoTPlugin.setEnabled(false);
       await AndroidAlarmManager.oneShot(
         const Duration(seconds: alarmDuration),
         Random().nextInt(pow(2, 31)),
@@ -95,11 +104,11 @@ class _WiFiStatusState extends State<WiFiStatus> {
 
   Widget _sleepWidget() {
     int epochTime = prefs.getInt(keyTargetTime);
-    targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
+    DateTime targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
     return Column(
       children: <Widget>[
         Expanded(
-            flex: 1,
+            flex: 2,
             child: FittedBox(
               alignment: Alignment.center,
               child: wifiOffIcon,
@@ -119,12 +128,12 @@ class _WiFiStatusState extends State<WiFiStatus> {
           ),
         ),
         Expanded(
-          flex: 2,
+          flex: 3,
           child: FittedBox(
               fit: BoxFit.contain,
               alignment: Alignment.topCenter,
               child: RaisedButton(
-                child: Text("Cancel"),
+                child: Text(btnCancel),
                 onPressed: () async {
                   print("==== Cancelled");
                   await WiFiForIoTPlugin.setEnabled(true);
@@ -142,19 +151,26 @@ class _WiFiStatusState extends State<WiFiStatus> {
     return Column(
       children: <Widget>[
         Expanded(
-          flex: 1,
+          flex: 2,
           child: FittedBox(
             alignment: Alignment.bottomCenter,
             child: Text(msgAwake),
           ),
         ),
         Expanded(
-          flex: 2,
+          flex: 1,
+          child: FittedBox(
+            alignment: Alignment.topCenter,
+            child: Text("for $defaultNapMinutes minutes"),
+          ),
+        ),
+        Expanded(
+          flex: 4,
           child: FittedBox(
               fit: BoxFit.contain,
               alignment: Alignment.topCenter,
               child: RaisedButton(
-                child: Text("Start"),
+                child: Text(btnStart),
                 onPressed: () async {
                   final DateTime now =
                       DateTime.now().add(Duration(minutes: defaultNapMinutes));
