@@ -26,9 +26,8 @@ const Icon wifiOffIcon = Icon(
   color: Colors.red,
 );
 
-// The callback for the alarm.  Whenever the alarm fires, send a null
-// message to the UI Isolate.
-Future<void> callback() async {
+// Whenever the alarm fires, send a null message to the UI Isolate.
+Future<void> alarmCallback() async {
   SendPort uiSendPort;
   uiSendPort ??= IsolateNameServer.lookupPortByName(isolateName);
   uiSendPort?.send(null);
@@ -67,24 +66,25 @@ class _WiFiStatusState extends State<WiFiStatus> {
     // If time's up, re-enable Wifi,
     // else keep wifi off and schedule a new alarm.
     if (timeIsUp) {
+      print("==== Time's Up !! Enabling WiFi");
+      await WiFiForIoTPlugin.setEnabled(true);
       if (isSleeping) {
-        print("==== Time's Up !! Enabling WiFi");
+        // case of app was killed and restarted while a timer is running
         isSleeping = false;
-        await WiFiForIoTPlugin.setEnabled(true);
         setState(() {});
       }
     } else {
+      print("==== Counting down to $targetTime: $currentTime...");
+      await WiFiForIoTPlugin.setEnabled(false);
       if (!isSleeping) {
         // case of app was killed and restarted while a timer is running
         isSleeping = true;
         setState(() {});
       }
-      print("==== Counting down to $targetTime: $currentTime...");
-      await WiFiForIoTPlugin.setEnabled(false);
       await AndroidAlarmManager.oneShot(
         const Duration(seconds: alarmDuration),
         Random().nextInt(pow(2, 31)),
-        callback,
+        alarmCallback,
         exact: true,
         wakeup: true,
         allowWhileIdle: true,
@@ -181,7 +181,7 @@ class _WiFiStatusState extends State<WiFiStatus> {
                   await AndroidAlarmManager.oneShot(
                     const Duration(seconds: alarmDuration),
                     alarmID,
-                    callback,
+                    alarmCallback,
                     exact: true,
                     wakeup: true,
                     allowWhileIdle: true,

@@ -10,4 +10,6 @@ Disable WiFi and automatically re-enable it shortly afterwards
   - Test killing app
   - Test phone restart
   - Handle case of WiFi already off on startup
+  - Keep WiFi off when timer is active
+  - Keep WiFi off when timer is inactive
 
