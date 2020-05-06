@@ -5,6 +5,7 @@ const String appTitle = 'WiFi Nap';
 const String aboutUrl = 'https://amg99.com';
 
 // Styles
+const appColor = Color(0xFFff7307);
 const TextStyle captionStyle =
     TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
 const TextStyle bodyStyle = TextStyle(fontSize: 16);

@@ -17,7 +17,7 @@ const btnCancel = 'Cancel';
 const Icon wifiOnIcon = Icon(
   Icons.wifi,
   size: iconSize,
-  color: Colors.green,
+  color: appColor,
 );
 
 const Icon wifiOffIcon = Icon(
@@ -151,7 +151,13 @@ class _WiFiStatusState extends State<WiFiStatus> {
     return Column(
       children: <Widget>[
         Expanded(
-          flex: 2,
+            flex: 2,
+            child: FittedBox(
+              alignment: Alignment.center,
+              child: wifiOnIcon,
+            )),
+        Expanded(
+          flex: 1,
           child: FittedBox(
             alignment: Alignment.bottomCenter,
             child: Text(msgAwake),
