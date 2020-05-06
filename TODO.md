@@ -3,7 +3,9 @@
 ## TODO
 
 ### Next Release
-- Launcher icon
+- x Launcher icon
+- Layout
+- Play store assets
 - Add About page, with version number
 
 ### Future Release
