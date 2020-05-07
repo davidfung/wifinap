@@ -23,7 +23,7 @@ const Icon wifiOnIcon = Icon(
 const Icon wifiOffIcon = Icon(
   Icons.signal_wifi_off,
   size: iconSize,
-  color: Colors.red,
+  color: Colors.amber,
 );
 
 // Whenever the alarm fires, send a null message to the UI Isolate.
