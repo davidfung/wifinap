@@ -4,25 +4,24 @@ import 'dart:ui';
 
 import 'package:android_alarm_manager/android_alarm_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 
 import '../constants.dart';
 import '../main.dart';
 
-const iconSize = 200.0;
-//const btnFontSize = 60.0;
 const btnStart = 'Start';
 const btnCancel = 'Cancel';
 
 const Icon wifiOnIcon = Icon(
   Icons.wifi,
-  size: iconSize,
+  size: 200,
   color: appColor,
 );
 
 const Icon wifiOffIcon = Icon(
   Icons.signal_wifi_off,
-  size: iconSize,
+  size: 185,
   color: Colors.amber,
 );
 
@@ -105,43 +104,46 @@ class _WiFiStatusState extends State<WiFiStatus> {
   Widget _sleepWidget() {
     int epochTime = prefs.getInt(keyTargetTime);
     DateTime targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
+    String targetTimeStr = DateFormat('jms').format(targetTime);
     return Column(
       children: <Widget>[
         Expanded(
-            flex: 2,
-            child: FittedBox(
-              alignment: Alignment.center,
-              child: wifiOffIcon,
-            )),
-        Expanded(
           flex: 1,
-          child: FittedBox(
-            alignment: Alignment.bottomCenter,
-            child: Text(msgSleep),
+          child: Container(
+            child: wifiOffIcon,
           ),
         ),
         Expanded(
           flex: 1,
-          child: FittedBox(
-            alignment: Alignment.topCenter,
-            child: Text("$targetTime"),
+          child: Container(
+            child: Column(
+              children: <Widget>[
+                Text(
+                  msgSleep,
+                  style: TextStyle(fontSize: 40),
+                ),
+                Text(
+                  targetTimeStr,
+                  style: TextStyle(fontSize: 35),
+                ),
+                SizedBox(height: 30),
+                RaisedButton(
+                  padding: EdgeInsets.all(15),
+                  child: Text(
+                    btnCancel,
+                    style: TextStyle(fontSize: 30),
+                  ),
+                  onPressed: () async {
+                    print("==== Cancelled");
+                    await WiFiForIoTPlugin.setEnabled(true);
+                    await AndroidAlarmManager.cancel(alarmID);
+                    isSleeping = false;
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          flex: 3,
-          child: FittedBox(
-              fit: BoxFit.contain,
-              alignment: Alignment.topCenter,
-              child: RaisedButton(
-                child: Text(btnCancel),
-                onPressed: () async {
-                  print("==== Cancelled");
-                  await WiFiForIoTPlugin.setEnabled(true);
-                  await AndroidAlarmManager.cancel(alarmID);
-                  isSleeping = false;
-                  setState(() {});
-                },
-              )),
         ),
       ],
     );
@@ -151,53 +153,49 @@ class _WiFiStatusState extends State<WiFiStatus> {
     return Column(
       children: <Widget>[
         Expanded(
-            flex: 2,
-            child: FittedBox(
-              alignment: Alignment.center,
-              child: wifiOnIcon,
-            )),
-        Expanded(
           flex: 1,
-          child: FittedBox(
-            alignment: Alignment.bottomCenter,
-            child: Text(msgAwake),
+          child: Container(
+            child: wifiOnIcon,
           ),
         ),
         Expanded(
           flex: 1,
-          child: FittedBox(
-            alignment: Alignment.topCenter,
-            child: Text("for $defaultNapMinutes minutes"),
+          child: Container(
+            child: Column(
+              children: <Widget>[
+                Text(
+                  msgAwake,
+                  style: TextStyle(fontSize: 40),
+                ),
+                Text("for $defaultNapMinutes minutes",
+                    style: TextStyle(fontSize: 35)),
+                SizedBox(height: 30),
+                RaisedButton(
+                  padding: EdgeInsets.all(15),
+                  child: Text(btnStart, style: TextStyle(fontSize: 30)),
+                  onPressed: () async {
+                    final DateTime now = DateTime.now()
+                        .add(Duration(minutes: defaultNapMinutes));
+                    int epochTime = now.millisecondsSinceEpoch;
+                    print("============== [$now] Button pressed! Disable WiFi");
+                    await prefs.setInt(keyTargetTime, epochTime);
+                    await AndroidAlarmManager.oneShot(
+                      const Duration(seconds: alarmDuration),
+                      alarmID,
+                      alarmCallback,
+                      exact: true,
+                      wakeup: true,
+                      allowWhileIdle: true,
+                      rescheduleOnReboot: true,
+                    );
+                    await WiFiForIoTPlugin.setEnabled(false);
+                    isSleeping = true;
+                    setState(() {});
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          flex: 4,
-          child: FittedBox(
-              fit: BoxFit.contain,
-              alignment: Alignment.topCenter,
-              child: RaisedButton(
-                child: Text(btnStart),
-                onPressed: () async {
-                  final DateTime now =
-                      DateTime.now().add(Duration(minutes: defaultNapMinutes));
-                  int epochTime = now.millisecondsSinceEpoch;
-
-                  print("================ [$now] Button pressed! Disable WiFi");
-                  await prefs.setInt(keyTargetTime, epochTime);
-                  await AndroidAlarmManager.oneShot(
-                    const Duration(seconds: alarmDuration),
-                    alarmID,
-                    alarmCallback,
-                    exact: true,
-                    wakeup: true,
-                    allowWhileIdle: true,
-                    rescheduleOnReboot: true,
-                  );
-                  await WiFiForIoTPlugin.setEnabled(false);
-                  isSleeping = true;
-                  setState(() {});
-                },
-              )),
         ),
       ],
     );
