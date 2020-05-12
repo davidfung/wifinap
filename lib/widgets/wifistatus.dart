@@ -14,6 +14,8 @@ import '../utils/sysutils.dart';
 const btnStart = 'Start';
 const btnCancel = 'Cancel';
 
+enum AppState { napping, awake }
+
 const Icon wifiOnIcon = Icon(
   Icons.wifi,
   size: 200,
@@ -39,7 +41,7 @@ class WiFiStatus extends StatefulWidget {
 }
 
 class _WiFiStatusState extends State<WiFiStatus> {
-  bool isSleeping = false;
+  AppState appState = AppState.awake;
   final alarmID = Random().nextInt(pow(2, 31));
 
   @override
@@ -48,42 +50,51 @@ class _WiFiStatusState extends State<WiFiStatus> {
     // Listen to the background isolate.
     port.listen((_) async => await _checkpoint());
 
-    void _initCheckpoint() async {
+    void _initialCheckpoint() async {
       await _checkpoint();
     }
 
-    _initCheckpoint();
+    _initialCheckpoint();
   }
 
   /// Call this routine regularly to see what should we do next.
-  /// Usually repeatedly called by an alarm, but also being called at start up.
+  /// Usually repeatedly called by an alarm, but also being called at start up
+  /// and button click.
   Future<void> _checkpoint() async {
+    print("[${DateTime.now()}] _checkpoint()");
     int epochTime = prefs.getInt(keyTargetTime);
     DateTime targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
     DateTime currentTime = DateTime.now();
-    bool timeIsUp = targetTime.difference(currentTime).isNegative;
+    Duration tolerance = Duration(seconds: alarmDuration ~/ 2);
+    bool timeIsUp =
+        targetTime.difference(currentTime.add(tolerance)).isNegative;
+
+    // cancel any pending alarm
+    await AndroidAlarmManager.cancel(alarmID);
 
     // If time's up, re-enable Wifi,
     // else keep wifi off and schedule a new alarm.
     if (timeIsUp) {
       print("==== Time's Up !! Enabling WiFi");
       await WiFiForIoTPlugin.setEnabled(true);
-      if (isSleeping) {
-        // case of app was killed and restarted while a timer is running
-        isSleeping = false;
-        setState(() {});
+      if (appState != AppState.awake) {
+        dbgPrint2("State Change to AWAKE");
+        setState(() {
+          appState = AppState.awake;
+        });
       }
     } else {
       print("==== Counting down to $targetTime: $currentTime...");
       await WiFiForIoTPlugin.setEnabled(false);
-      if (!isSleeping) {
-        // case of app was killed and restarted while a timer is running
-        isSleeping = true;
-        setState(() {});
+      if (appState != AppState.napping) {
+        dbgPrint2("State Change to napping");
+        setState(() {
+          appState = AppState.napping;
+        });
       }
       await AndroidAlarmManager.oneShot(
         const Duration(seconds: alarmDuration),
-        Random().nextInt(pow(2, 31)),
+        alarmID,
         alarmCallback,
         exact: true,
         wakeup: true,
@@ -95,14 +106,14 @@ class _WiFiStatusState extends State<WiFiStatus> {
 
   @override
   Widget build(BuildContext context) {
-    if (isSleeping) {
-      return _sleepWidget();
-    } else {
+    if (appState == AppState.awake) {
       return _awakeWidget();
+    } else {
+      return _nappingWidget();
     }
   }
 
-  Widget _sleepWidget() {
+  Widget _nappingWidget() {
     int epochTime = prefs.getInt(keyTargetTime);
     DateTime targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
     String targetTimeStr = DateFormat('jms').format(targetTime);
@@ -136,10 +147,8 @@ class _WiFiStatusState extends State<WiFiStatus> {
                   ),
                   onPressed: () async {
                     print("==== Cancelled");
-                    await WiFiForIoTPlugin.setEnabled(true);
-                    await AndroidAlarmManager.cancel(alarmID);
-                    isSleeping = false;
-                    setState(() {});
+                    await prefs.setInt(keyTargetTime, 0);
+                    await _checkpoint();
                   },
                 ),
               ],
@@ -176,23 +185,13 @@ class _WiFiStatusState extends State<WiFiStatus> {
                   padding: EdgeInsets.all(15),
                   child: Text(btnStart, style: TextStyle(fontSize: 30)),
                   onPressed: () async {
-                    final DateTime now = DateTime.now()
+                    final DateTime targetTime = DateTime.now()
                         .add(Duration(minutes: defaultNapMinutes));
-                    int epochTime = now.millisecondsSinceEpoch;
-                    print("============== [$now] Button pressed! Disable WiFi");
+                    print(
+                        "============== [${DateTime.now()}] Button pressed! Disable WiFi until $targetTime");
+                    int epochTime = targetTime.millisecondsSinceEpoch;
                     await prefs.setInt(keyTargetTime, epochTime);
-                    await AndroidAlarmManager.oneShot(
-                      const Duration(seconds: alarmDuration),
-                      alarmID,
-                      alarmCallback,
-                      exact: true,
-                      wakeup: true,
-                      allowWhileIdle: true,
-                      rescheduleOnReboot: true,
-                    );
-                    await WiFiForIoTPlugin.setEnabled(false);
-                    isSleeping = true;
-                    setState(() {});
+                    await _checkpoint();
                   },
                 ),
               ],

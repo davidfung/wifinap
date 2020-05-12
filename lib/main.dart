@@ -9,10 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import './constants.dart';
 import './widgets/wifistatus.dart';
 
-/// Global [SharedPreferences] object.
 SharedPreferences prefs;
-
-/// A port of the UI isolate to receive messages
 final ReceivePort port = ReceivePort();
 
 void main() async {
