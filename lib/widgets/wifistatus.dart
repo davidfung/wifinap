@@ -9,6 +9,7 @@ import 'package:wifi_iot/wifi_iot.dart';
 
 import '../constants.dart';
 import '../main.dart';
+import '../utils/sysutils.dart';
 
 const btnStart = 'Start';
 const btnCancel = 'Cancel';
@@ -167,7 +168,8 @@ class _WiFiStatusState extends State<WiFiStatus> {
                   msgAwake,
                   style: TextStyle(fontSize: 40),
                 ),
-                Text("for $defaultNapMinutes minutes",
+                Text(
+                    "for $defaultNapMinutes ${"minute".plural(defaultNapMinutes)}",
                     style: TextStyle(fontSize: 35)),
                 SizedBox(height: 30),
                 RaisedButton(
