@@ -7,7 +7,7 @@ extension PluralParsing on String {
 }
 
 void dbgPrint(String msg, {String prefix: ""}) {
-  print("$prefix[$DateTime.now()] $msg");
+  print("$prefix[${DateTime.now()}] $msg");
 }
 
 void dbgPrint2(String msg, {int indent: 6, String mark: "="}) {

@@ -4,7 +4,7 @@
 
 ### Next Release
 - x Launcher icon
-- Layout
+- x Layout
 - Play store assets
 - Add About page, with version number
 

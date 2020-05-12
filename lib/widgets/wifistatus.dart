@@ -40,14 +40,14 @@ class WiFiStatus extends StatefulWidget {
   _WiFiStatusState createState() => _WiFiStatusState();
 }
 
-class _WiFiStatusState extends State<WiFiStatus> {
+class _WiFiStatusState extends State<WiFiStatus> with WidgetsBindingObserver {
   AppState appState = AppState.awake;
   final alarmID = Random().nextInt(pow(2, 31));
 
   @override
   void initState() {
     super.initState();
-    // Listen to the background isolate.
+    WidgetsBinding.instance.addObserver(this);
     port.listen((_) async => await _checkpoint());
 
     void _initialCheckpoint() async {
@@ -55,6 +55,26 @@ class _WiFiStatusState extends State<WiFiStatus> {
     }
 
     _initialCheckpoint();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.resumed:
+        dbgPrint2("applifecycle=$state, calling checkpint...");
+        _checkpoint();
+        break;
+      default:
+        break;
+    }
   }
 
   /// Call this routine regularly to see what should we do next.
