@@ -69,7 +69,7 @@ class _WiFiStatusState extends State<WiFiStatus> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
       case AppLifecycleState.resumed:
-        dbgPrint2("applifecycle=$state, calling checkpint...");
+        syPrint2("applifecycle=$state, calling checkpint...");
         _checkpoint();
         break;
       default:
@@ -81,7 +81,7 @@ class _WiFiStatusState extends State<WiFiStatus> with WidgetsBindingObserver {
   /// Usually repeatedly called by an alarm, but also being called at start up
   /// and button click.
   Future<void> _checkpoint() async {
-    print("[${DateTime.now()}] _checkpoint()");
+    syPrint("_checkpoint()");
     int epochTime = prefs.getInt(keyTargetTime);
     DateTime targetTime = DateTime.fromMillisecondsSinceEpoch(epochTime);
     DateTime currentTime = DateTime.now();
@@ -95,19 +95,19 @@ class _WiFiStatusState extends State<WiFiStatus> with WidgetsBindingObserver {
     // If time's up, re-enable Wifi,
     // else keep wifi off and schedule a new alarm.
     if (timeIsUp) {
-      print("==== Time's Up !! Enabling WiFi");
+      syPrint("Time's Up !! Enabling WiFi");
       await WiFiForIoTPlugin.setEnabled(true);
       if (appState != AppState.awake) {
-        dbgPrint2("State Change to AWAKE");
+        syPrint2("State Change to AWAKE");
         setState(() {
           appState = AppState.awake;
         });
       }
     } else {
-      print("==== Counting down to $targetTime: $currentTime...");
+      syPrint2("Counting down to $targetTime: $currentTime...");
       await WiFiForIoTPlugin.setEnabled(false);
       if (appState != AppState.napping) {
-        dbgPrint2("State Change to napping");
+        syPrint2("State Change to napping");
         setState(() {
           appState = AppState.napping;
         });
@@ -166,7 +166,7 @@ class _WiFiStatusState extends State<WiFiStatus> with WidgetsBindingObserver {
                     style: TextStyle(fontSize: 30),
                   ),
                   onPressed: () async {
-                    print("==== Cancelled");
+                    syPrint("Cancelled");
                     await prefs.setInt(keyTargetTime, 0);
                     await _checkpoint();
                   },
@@ -207,8 +207,7 @@ class _WiFiStatusState extends State<WiFiStatus> with WidgetsBindingObserver {
                   onPressed: () async {
                     final DateTime targetTime = DateTime.now()
                         .add(Duration(minutes: defaultNapMinutes));
-                    print(
-                        "============== [${DateTime.now()}] Button pressed! Disable WiFi until $targetTime");
+                    syPrint2("Button pressed! Disable WiFi until $targetTime");
                     int epochTime = targetTime.millisecondsSinceEpoch;
                     await prefs.setInt(keyTargetTime, epochTime);
                     await _checkpoint();
