@@ -6,10 +6,10 @@ extension PluralParsing on String {
   }
 }
 
-void syPrint(String msg, {String prefix: ""}) {
+void utPrint(String msg, {String prefix: ""}) {
   print("$prefix[${DateTime.now()}] $msg");
 }
 
-void syPrint2(String msg, {int indent: 6, String mark: "="}) {
-  syPrint(msg, prefix: mark * indent);
+void utPrint2(String msg, {int indent: 6, String mark: "="}) {
+  utPrint(msg, prefix: mark * indent);
 }
