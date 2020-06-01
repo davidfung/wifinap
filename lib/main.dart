@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import './constants.dart';
+import './widgets/app_retain_widget.dart';
 import './widgets/wifistatus.dart';
 
 SharedPreferences prefs;
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primaryColor: appColor,
       ),
-      home: MyHomePage(title: 'WiFi Nap'),
+      home: AppRetainWidget(child: MyHomePage(title: 'WiFi Nap')),
     );
   }
 }

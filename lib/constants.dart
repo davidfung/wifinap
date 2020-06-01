@@ -22,7 +22,7 @@ const int defaultNapMinutes = 5;
 const String isolateName = 'isolate';
 
 // Alarm interval
-const int alarmDuration = 30; // in seconds
+const int alarmDuration = 15; // in seconds
 
 // UI strings
 const msgSleep = 'WiFi disabled until';

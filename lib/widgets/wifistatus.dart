@@ -69,8 +69,11 @@ class _WiFiStatusState extends State<WiFiStatus> with WidgetsBindingObserver {
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
       case AppLifecycleState.resumed:
-        utPrint2("applifecycle=$state, calling checkpint...");
+        utPrint2("applifecycle=$state, calling checkpoint...");
         _checkpoint();
+        break;
+      case AppLifecycleState.detached:
+        utPrint2("applifecycle=$state, calling checkpoint...", mark: "*" * 20);
         break;
       default:
         break;
