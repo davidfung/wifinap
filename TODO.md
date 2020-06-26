@@ -5,7 +5,7 @@
 ### Next Release
 - x Launcher icon
 - x Layout
-- Keep it running when back button is pressed
+- x Keep it running when back button is pressed
 - Play store assets
 - Add About page, with version number
 
