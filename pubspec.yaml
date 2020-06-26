@@ -22,6 +22,8 @@ dependencies:
   android_alarm_manager: ^0.4.5+8
   intl: ^0.16.1
   shared_preferences: ^0.5.6+3
+  package_info: ^0.4.1
+  url_launcher: ^5.4.11
   wifi_iot: ^0.1.1
 
   # The following adds the Cupertino Icons font to your application.

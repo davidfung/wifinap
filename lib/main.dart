@@ -7,7 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import './constants.dart';
+import './pages/about_page.dart';
 import './widgets/app_retain_widget.dart';
+import './widgets/main_drawer.dart';
 import './widgets/wifistatus.dart';
 
 SharedPreferences prefs;
@@ -41,7 +43,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primaryColor: appColor,
       ),
-      home: AppRetainWidget(child: MyHomePage(title: 'WiFi Nap')),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => AppRetainWidget(child: MyHomePage(title: 'WiFi Nap')),
+        AboutPage.routeName: (context) => AboutPage(),
+      },
     );
   }
 }
@@ -58,6 +64,7 @@ class MyHomePage extends StatelessWidget {
         appBar: AppBar(
           title: Text(title),
         ),
+        drawer: MainDrawer(),
         body: Container(
           alignment: Alignment.center,
           child: WiFiStatus(),
