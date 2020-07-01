@@ -38,3 +38,6 @@ lib/generated_plugin_registrant.dart
 
 # Gradle related
 /.gradle/
+
+# Keystore
+key.properties
