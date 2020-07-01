@@ -2,14 +2,14 @@
 
 ## TODO
 
-### Next Release
-- x Launcher icon
-- x Layout
-- x Keep it running when back button is pressed
+### 1.0.0.+1
+- Launcher icon
+- Layout
+- Keep it running when back button is pressed
 - Play store assets
 - Add About page, with version number
 
-### Future Release
+### Future Releases
 - Keep it running with a background service
 - animation when timer is active
 - Add Setting page for the minutes to nap
